@@ -1,10 +1,19 @@
 from flask import render_template, Blueprint, request, redirect, url_for, jsonify
 from project import db
 from project.customers.models import Customer
-
+import re
 
 # Blueprint for customers
 customers = Blueprint('customers', __name__, template_folder='templates', url_prefix='/customers')
+
+# validate input
+def validate_customer_data(name: str, city: str) -> bool:
+    if not 5 <= len(name) < 25 or not re.search("^[a-zA-Z ]+[a-zA-Z]$", name):
+        return False
+    if not 4 <= len(city) <= 25 or not re.search("^[a-zA-Z ]+[a-zA-Z]$", city):
+        return False
+    
+    return True
 
 
 # Route to display customers in HTML
@@ -34,6 +43,9 @@ def create_customer():
     if 'name' not in data or 'city' not in data or 'age' not in data:
         print('Invalid form data')
         return jsonify({'error': 'Invalid form data'}), 400
+
+    if validate_customer_data(data['name'], data['city']) is False:
+        return jsonify({'error': 'malformed input. Make sure that customer name has at least 5 characters and no more than 25 characters and that it consists only of letters. Additionally, make sure that city name has at least 4 characters and no more than 25 and that it consists only of letters.'}), 500
 
     new_customer = Customer(name=data['name'], city=data['city'], age=data['age'])
 
@@ -83,6 +95,9 @@ def edit_customer(customer_id):
     try:
         # Get data from the request
         data = request.form
+
+        if validate_customer_data(data['name'], data['city']) is False:
+            return jsonify({'error': 'malformed input. Make sure that customer name has at least 5 characters and no more than 25 characters and that it consists only of letters. Additionally, make sure that city name has at least 4 characters and no more than 25 and that it consists only of letters.'}), 500
 
         # Update customer details
         customer.name = data['name']

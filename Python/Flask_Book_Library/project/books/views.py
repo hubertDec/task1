@@ -2,10 +2,20 @@ from flask import render_template, Blueprint, request, redirect, url_for, jsonif
 from project import db
 from project.books.models import Book
 from project.books.forms import CreateBook
+import re
 
 
 # Blueprint for books
 books = Blueprint('books', __name__, template_folder='templates', url_prefix='/books')
+
+# validate input
+def validate_book_data(name: str, author: str) -> bool:
+    if not 1 <= len(name) < 30 or not re.search("^[a-zA-Z\d ]+$", name):
+        return False
+    if not 5 <= len(author) <= 25 or not re.search("^[a-zA-Z ]+[a-zA-Z]$", author):
+        return False
+    
+    return True
 
 
 # Route to display books in HTML
@@ -31,6 +41,9 @@ def list_books_json():
 @books.route('/create', methods=['POST', 'GET'])
 def create_book():
     data = request.get_json()
+
+    if validate_book_data(data['name'], data['author']) is False:
+        return jsonify({'error': 'malformed input. Make sure that book name has at least 1 character and no more than 30 characters and that it consists only of letters or numbers. Additionally, make sure that author name has at least 5 characters and no more than 25 and that it consists only of letters.'}), 500
 
     new_book = Book(name=data['name'], author=data['author'], year_published=data['year_published'], book_type=data['book_type'])
 
@@ -62,6 +75,9 @@ def edit_book(book_id):
         # Get data from the request as JSON
         data = request.get_json()
         
+        if validate_book_data(data['name'], data['author']) is False:
+            return jsonify({'error': 'malformed input. Make sure that book name has at least 1 character and no more than 30 characters and that it consists only of letters or numbers. Additionally, make sure that author name has at least 5 characters and no more than 25 and it consists only of letters.'}), 500
+
         # Update book details
         book.name = data.get('name', book.name)  # Update if data exists, otherwise keep the same
         book.author = data.get('author', book.author)

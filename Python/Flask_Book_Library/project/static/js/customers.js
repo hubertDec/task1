@@ -137,9 +137,10 @@ $(document).ready(() => {
                 $('#editCustomerModal').modal('hide');
                 location.reload();
             },
-            error: (xhr, textStatus, errorThrown) => {
-                console.log('Error:', errorThrown);
-                alert('Error updating customer: ' + errorThrown);
+            error: error => {
+                console.log('Error:', error);
+                // Display an error notification
+                alert('Error updating customer: ' + error.responseJSON.error);
             }
         });
     });
